@@ -1,3 +1,4 @@
+// src/users/entities/user.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 
@@ -8,6 +9,9 @@ export class User {
 
   @Column()
   full_name: string;
+
+  @Column({ unique: true })
+  rekening: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   balance: number;

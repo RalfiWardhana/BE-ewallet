@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+// src/users/users.service.ts
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -14,18 +15,38 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    // Check if rekening already exists
+    const existingUser = await this.usersRepository.findOne({ 
+      where: { rekening: createUserDto.rekening } 
+    });
+    
+    if (existingUser) {
+      throw new ConflictException('Rekening already exists');
+    }
+
     const user = this.usersRepository.create(createUserDto);
     return await this.usersRepository.save(user);
   }
 
   async findAll() {
-    return await this.usersRepository.find();
+    return await this.usersRepository.find({
+      select: ['id', 'full_name', 'rekening', 'balance', 'created_at'],
+      order: { created_at: 'DESC' }
+    });
   }
 
   async findOne(id: number) {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async findByRekening(rekening: string) {
+    const user = await this.usersRepository.findOne({ where: { rekening } });
+    if (!user) {
+      throw new NotFoundException('User with this rekening not found');
     }
     return user;
   }
@@ -53,7 +74,11 @@ export class UsersService {
       await queryRunner.manager.save(transaction);
 
       await queryRunner.commitTransaction();
-      return { message: 'Topup successful', balance: user.balance };
+      return { 
+        message: 'Topup successful', 
+        balance: user.balance,
+        rekening: user.rekening 
+      };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
@@ -62,21 +87,30 @@ export class UsersService {
     }
   }
 
-  async transfer(fromUserId: number, toUserId: number, amount: number) {
-    if (fromUserId === toUserId) {
-      throw new BadRequestException('Cannot transfer to same user');
-    }
-
+  async transfer(fromUserId: number, toUserIdOrRekening: number | string, amount: number) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const fromUser = await queryRunner.manager.findOne(User, { where: { id: fromUserId } });
-      const toUser = await queryRunner.manager.findOne(User, { where: { id: toUserId } });
+      if (!fromUser) {
+        throw new NotFoundException('Sender user not found');
+      }
 
-      if (!fromUser || !toUser) {
-        throw new NotFoundException('User not found');
+      let toUser: User | null;
+      if (typeof toUserIdOrRekening === 'number') {
+        toUser = await queryRunner.manager.findOne(User, { where: { id: toUserIdOrRekening } });
+      } else {
+        toUser = await queryRunner.manager.findOne(User, { where: { rekening: toUserIdOrRekening } });
+      }
+
+      if (!toUser) {
+        throw new NotFoundException('Recipient user not found');
+      }
+
+      if (fromUser.id === toUser.id) {
+        throw new BadRequestException('Cannot transfer to same user');
       }
 
       if (Number(fromUser.balance) < amount) {
@@ -99,7 +133,12 @@ export class UsersService {
       await queryRunner.manager.save(transaction);
 
       await queryRunner.commitTransaction();
-      return { message: 'Transfer successful', balance: fromUser.balance };
+      return { 
+        message: 'Transfer successful', 
+        balance: fromUser.balance,
+        from_rekening: fromUser.rekening,
+        to_rekening: toUser.rekening
+      };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;

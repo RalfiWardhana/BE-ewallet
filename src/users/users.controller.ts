@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Delete, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+// src/users/users.controller.ts
+import { Controller, Get, Post, Body, Param, Delete, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { TopupDto } from './dto/topup.dto';
@@ -11,7 +12,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create new user' })
+  @ApiOperation({ summary: 'Create new user with rekening' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -28,6 +29,12 @@ export class UsersController {
     return this.usersService.findOne(+id);
   }
 
+  @Get('rekening/:rekening')
+  @ApiOperation({ summary: 'Get user by rekening number' })
+  findByRekening(@Param('rekening') rekening: string) {
+    return this.usersService.findByRekening(rekening);
+  }
+
   @Post(':id/topup')
   @ApiOperation({ summary: 'Top up user balance' })
   topup(@Param('id') id: string, @Body() topupDto: TopupDto) {
@@ -35,9 +42,17 @@ export class UsersController {
   }
 
   @Post(':id/transfer')
-  @ApiOperation({ summary: 'Transfer balance to another user' })
-  transfer(@Param('id') id: string, @Body() transferDto: TransferDto) {
-    return this.usersService.transfer(+id, transferDto.to_user_id, transferDto.amount);
+  @ApiOperation({ summary: 'Transfer balance to another user by ID or rekening' })
+  async transfer(@Param('id') id: string, @Body() transferDto: TransferDto) {
+    if (!transferDto.to_user_id && !transferDto.to_rekening) {
+      throw new HttpException('Either to_user_id or to_rekening must be provided', HttpStatus.BAD_REQUEST);
+    }
+    
+    if (transferDto.to_user_id) {
+      return this.usersService.transfer(+id, transferDto.to_user_id, transferDto.amount);
+    } else {
+      return this.usersService.transfer(+id, transferDto.to_rekening!, transferDto.amount);
+    }
   }
 
   @Delete(':id')

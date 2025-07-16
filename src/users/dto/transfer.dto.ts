@@ -1,12 +1,19 @@
-import { IsNumber, IsPositive } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+// src/users/dto/transfer.dto.ts
+import { IsNumber, IsPositive, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TransferDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Target user ID (use either this or to_rekening)' })
   @IsNumber()
-  to_user_id: number;
+  @IsOptional()
+  to_user_id?: number;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Target user rekening (use either this or to_user_id)' })
+  @IsString()
+  @IsOptional()
+  to_rekening?: string;
+
+  @ApiProperty({ description: 'Amount to transfer' })
   @IsNumber()
   @IsPositive()
   amount: number;
