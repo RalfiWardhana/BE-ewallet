@@ -1,7 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 export const databaseConfig = (): TypeOrmModuleOptions => {
-  // Debug: Print configuration (hapus di production)
   console.log('Database Configuration:', {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306'),
@@ -18,7 +17,7 @@ export const databaseConfig = (): TypeOrmModuleOptions => {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'ewallet_db',
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: true, // Set to false in production
+    synchronize: true,
     logging: true,
   };
 };

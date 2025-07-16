@@ -1,4 +1,3 @@
-// src/transactions/transactions.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
@@ -19,7 +18,6 @@ export class TransactionsService {
       .where('(transaction.from_user_id = :userId OR transaction.to_user_id = :userId)', { userId });
 
     if (date) {
-      // Create date range for the entire day
       const startDate = new Date(date);
       startDate.setHours(0, 0, 0, 0);
       

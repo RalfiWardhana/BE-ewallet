@@ -1,4 +1,3 @@
-// src/users/dto/transfer.dto.ts
 import { IsNumber, IsPositive, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
