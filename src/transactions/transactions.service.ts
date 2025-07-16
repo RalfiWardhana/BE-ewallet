@@ -62,7 +62,6 @@ export class TransactionsService {
       query.andWhere('(transaction.from_user_id = :userId OR transaction.to_user_id = :userId)', { userId });
     }
 
-    // Add date filtering if provided
     if (startDate && endDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -110,7 +109,6 @@ export class TransactionsService {
       query.andWhere('transaction.to_user_id = :userId', { userId });
     }
 
-    // Add date filtering if provided
     if (startDate && endDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -143,7 +141,6 @@ export class TransactionsService {
     }));
   }
 
-  // New method to get transactions by date range
   async getTransactionsByDateRange(startDate: string, endDate: string, userId?: number) {
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);

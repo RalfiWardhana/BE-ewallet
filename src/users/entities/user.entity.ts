@@ -1,4 +1,3 @@
-// src/users/entities/user.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 
